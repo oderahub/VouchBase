@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-[#0a0a0f] text-white min-h-screen;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'Space Mono', monospace;
+  }
+}
+
+@layer components {
+  /* Base blue gradient */
+  .bg-base-gradient {
+    background: linear-gradient(135deg, #0052ff 0%, #2563eb 50%, #0052ff 100%);
+  }
+
+  .text-base-blue {
+    color: #0052ff;
+  }
+
+  .border-base-blue {
+    border-color: #0052ff;
+  }
+
+  .bg-base-blue {
+    background-color: #0052ff;
+  }
+
+  /* Glowing effects */
+  .glow-blue {
+    box-shadow: 0 0 30px rgba(0, 82, 255, 0.3),
+                0 0 60px rgba(0, 82, 255, 0.1);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 20px rgba(0, 82, 255, 0.5);
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10;
+    backdrop-filter: blur(10px);
+  }
+
+  .card:hover {
+    @apply border-[#0052ff]/30 bg-white/[0.05];
+  }
+
+  /* Skill badge */
+  .skill-badge {
+    @apply bg-[#0052ff]/10 border border-[#0052ff]/30 transition-all duration-200;
+  }
+
+  .skill-badge:hover {
+    @apply bg-[#0052ff]/20 border-[#0052ff];
+  }
+
+  .skill-badge.selected {
+    @apply bg-[#0052ff] border-[#0052ff];
+  }
+
+  /* Button styles */
+  .btn-primary {
+    background: linear-gradient(135deg, #0052ff 0%, #2563eb 100%);
+    @apply transition-all duration-300;
+  }
+
+  .btn-primary:hover {
+    @apply -translate-y-0.5 shadow-[0_10px_30px_rgba(0,82,255,0.3)];
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed translate-y-0;
+  }
+
+  /* Animated background */
+  .animated-bg {
+    @apply fixed top-0 left-0 w-full h-full -z-10 overflow-hidden;
+  }
+
+  .animated-bg::before {
+    content: '';
+    @apply absolute w-[150%] h-[150%] -top-1/4 -left-1/4;
+    background: radial-gradient(circle at 30% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 40%);
+    animation: float 20s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(2%, 2%) rotate(1deg); }
+    66% { transform: translate(-1%, 1%) rotate(-1deg); }
+  }
+
+  /* Stats counter animation */
+  .stat-value {
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply bg-white/5 border border-white/10 transition-all duration-200;
+  }
+
+  .input-field:focus {
+    @apply outline-none border-[#0052ff] bg-[#0052ff]/5;
+  }
+
+  /* Vouch button animation */
+  .vouch-btn {
+    @apply relative overflow-hidden;
+  }
+
+  .vouch-btn::after {
+    content: '';
+    @apply absolute top-1/2 left-1/2 w-0 h-0 bg-white/20 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-300;
+  }
+
+  .vouch-btn:hover::after {
+    @apply w-[200%] h-[200%];
+  }
+
+  /* Leaderboard rank */
+  .rank-1 {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+  }
+
+  .rank-2 {
+    background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 100%);
+  }
+
+  .rank-3 {
+    background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
+  }
+}
+
+@layer utilities {
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#0052ff]/30 rounded-[3px];
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#0052ff]/50;
+  }
+}
