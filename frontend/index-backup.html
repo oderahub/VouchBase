@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VouchBase - On-Chain Builder Credentials</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .font-mono { font-family: 'Space Mono', monospace; }
+        
+        /* Base blue gradient */
+        .bg-base-gradient {
+            background: linear-gradient(135deg, #0052ff 0%, #2563eb 50%, #0052ff 100%);
+        }
+        
+        .text-base-blue { color: #0052ff; }
+        .border-base-blue { border-color: #0052ff; }
+        .bg-base-blue { background-color: #0052ff; }
+        
+        /* Glowing effects */
+        .glow-blue {
+            box-shadow: 0 0 30px rgba(0, 82, 255, 0.3),
+                        0 0 60px rgba(0, 82, 255, 0.1);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px rgba(0, 82, 255, 0.5);
+        }
+        
+        /* Card styles */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            border-color: rgba(0, 82, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Skill badge */
+        .skill-badge {
+            background: rgba(0, 82, 255, 0.1);
+            border: 1px solid rgba(0, 82, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .skill-badge:hover {
+            background: rgba(0, 82, 255, 0.2);
+            border-color: #0052ff;
+        }
+        
+        .skill-badge.selected {
+            background: #0052ff;
+            border-color: #0052ff;
+        }
+        
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #0052ff 0%, #2563eb 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 82, 255, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background: radial-gradient(circle at 30% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 70% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 40%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+        
+        /* Stats counter animation */
+        .stat-value {
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Input styles */
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #0052ff;
+            background: rgba(0, 82, 255, 0.05);
+        }
+        
+        /* Vouch button animation */
+        .vouch-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .vouch-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .vouch-btn:hover::after {
+            width: 200%;
+            height: 200%;
+        }
+        
+        /* Leaderboard rank */
+        .rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 100%); }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 82, 255, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 82, 255, 0.5); }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // ============ CONTRACT CONFIG ============
+        
+        const CONTRACT_ADDRESS = 'YOUR_CONTRACT_ADDRESS'; // Update after deployment
+        const CHAIN_ID = 8453; // Base Mainnet
+        
+        const CONTRACT_ABI = [
+            "function register(string calldata username, string calldata github, string calldata twitter, uint8[] calldata initialSkills) external payable",
+            "function addSkill(uint8 skillId) external payable",
+            "function vouch(address builder, uint8 skillId) external payable",
+            "function getBuilder(address wallet) external view returns (string memory, string memory, string memory, uint256, uint256, uint256, uint256, uint8[] memory)",
+            "function getBuilderByUsername(string calldata username) external view returns (address)",
+            "function getSkillsWithVouches(address builder) external view returns (uint8[] memory, uint256[] memory)",
+            "function checkVouch(address voucher, address builder, uint8 skillId) external view returns (bool)",
+            "function getBuilderCount() external view returns (uint256)",
+            "function getBuilders(uint256 offset, uint256 limit) external view returns (address[] memory)",
+            "function totalVouches() external view returns (uint256)",
+            "function totalSkillsClaimed() external view returns (uint256)",
+            "function builders(address) external view returns (address, string memory, string memory, string memory, uint256, uint256, uint256, uint256, bool)",
+            "function registerFee() external view returns (uint256)",
+            "function addSkillFee() external view returns (uint256)",
+            "function vouchFee() external view returns (uint256)"
+        ];
+        
+        const SKILLS = {
+            1: 'Solidity', 2: 'Vyper', 3: 'Rust', 4: 'Cairo',
+            5: 'React', 6: 'Next.js', 7: 'TypeScript', 8: 'Vue',
+            9: 'Node.js', 10: 'Python', 11: 'Go',
+            12: 'Foundry', 13: 'Hardhat', 14: 'Wagmi', 15: 'Viem', 16: 'Ethers.js',
+            17: 'UI/UX', 18: 'Figma',
+            19: 'Security', 20: 'DevRel', 21: 'Technical Writing',
+            22: 'Base', 23: 'Ethereum', 24: 'DeFi', 25: 'NFT'
+        };
+        
+        const SKILL_CATEGORIES = {
+            'Smart Contracts': [1, 2, 3, 4],
+            'Frontend': [5, 6, 7, 8],
+            'Backend': [9, 10, 11],
+            'Web3 Tools': [12, 13, 14, 15, 16],
+            'Design': [17, 18],
+            'Other': [19, 20, 21],
+            'Blockchain': [22, 23, 24, 25]
+        };
+
+        // ============ COMPONENTS ============
+
+        function Header({ account, onConnect, onDisconnect }) {
+            return (
+                <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-base-gradient rounded-xl flex items-center justify-center glow-blue">
+                                <span className="text-xl font-bold">V</span>
+                            </div>
+                            <span className="text-xl font-bold tracking-tight">VouchBase</span>
+                        </div>
+                        
+                        {account ? (
+                            <div className="flex items-center gap-4">
+                                <span className="font-mono text-sm text-gray-400">
+                                    {account.slice(0, 6)}...{account.slice(-4)}
+                                </span>
+                                <button 
+                                    onClick={onDisconnect}
+                                    className="px-4 py-2 rounded-lg border border-white/10 hover:border-white/30 transition-colors text-sm"
+                                >
+                                    Disconnect
+                                </button>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={onConnect}
+                                className="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm"
+                            >
+                                Connect Wallet
+                            </button>
+                        )}
+                    </div>
+                </header>
+            );
+        }
+
+        function Stats({ stats }) {
+            return (
+                <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto mb-16">
+                    {[
+                        { label: 'Builders', value: stats.builders },
+                        { label: 'Vouches', value: stats.vouches },
+                        { label: 'Skills Claimed', value: stats.skills }
+                    ].map((stat, i) => (
+                        <div key={i} className="card rounded-2xl p-6 text-center">
+                            <div className="stat-value text-4xl font-bold mb-2">{stat.value}</div>
+                            <div className="text-gray-400 text-sm">{stat.label}</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function SkillSelector({ selected, onToggle }) {
+            return (
+                <div className="space-y-6">
+                    {Object.entries(SKILL_CATEGORIES).map(([category, skillIds]) => (
+                        <div key={category}>
+                            <h4 className="text-sm text-gray-400 mb-3">{category}</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {skillIds.map(id => (
+                                    <button
+                                        key={id}
+                                        onClick={() => onToggle(id)}
+                                        className={`skill-badge px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                            selected.includes(id) ? 'selected text-white' : 'text-gray-300'
+                                        }`}
+                                    >
+                                        {SKILLS[id]}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function RegisterForm({ onRegister, loading }) {
+            const [username, setUsername] = useState('');
+            const [github, setGithub] = useState('');
+            const [twitter, setTwitter] = useState('');
+            const [skills, setSkills] = useState([]);
+            
+            const toggleSkill = (id) => {
+                setSkills(prev => 
+                    prev.includes(id) 
+                        ? prev.filter(s => s !== id)
+                        : [...prev, id]
+                );
+            };
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onRegister({ username, github, twitter, skills });
+            };
+            
+            return (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2">Username *</label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
+                            placeholder="your_username"
+                            className="input-field w-full px-4 py-3 rounded-xl text-white"
+                            required
+                            minLength={3}
+                            maxLength={20}
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-2">GitHub</label>
+                            <input
+                                type="text"
+                                value={github}
+                                onChange={e => setGithub(e.target.value)}
+                                placeholder="github_username"
+                                className="input-field w-full px-4 py-3 rounded-xl text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-2">Twitter</label>
+                            <input
+                                type="text"
+                                value={twitter}
+                                onChange={e => setTwitter(e.target.value)}
+                                placeholder="@handle"
+                                className="input-field w-full px-4 py-3 rounded-xl text-white"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-4">Select Your Skills</label>
+                        <SkillSelector selected={skills} onToggle={toggleSkill} />
+                    </div>
+                    
+                    <button
+                        type="submit"
+                        disabled={loading || !username || skills.length === 0}
+                        className="btn-primary w-full py-4 rounded-xl font-semibold text-lg"
+                    >
+                        {loading ? 'Registering...' : `Register (${(0.0001 + skills.length * 0.00005).toFixed(5)} ETH)`}
+                    </button>
+                </form>
+            );
+        }
+
+        function BuilderCard({ builder, onVouch, currentAccount }) {
+            const [expanded, setExpanded] = useState(false);
+            
+            const isOwnProfile = currentAccount?.toLowerCase() === builder.wallet.toLowerCase();
+            
+            return (
+                <div className="card rounded-2xl p-6 transition-all duration-300">
+                    <div className="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 className="text-xl font-bold mb-1">{builder.username}</h3>
+                            <p className="font-mono text-xs text-gray-500">
+                                {builder.wallet.slice(0, 8)}...{builder.wallet.slice(-6)}
+                            </p>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-2xl font-bold text-base-blue glow-text">{builder.credibilityScore}</div>
+                            <div className="text-xs text-gray-400">Credibility</div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex gap-4 mb-4 text-sm text-gray-400">
+                        {builder.github && (
+                            <a href={`https://github.com/${builder.github}`} target="_blank" rel="noopener" className="hover:text-white transition-colors">
+                                GitHub
+                            </a>
+                        )}
+                        {builder.twitter && (
+                            <a href={`https://twitter.com/${builder.twitter.replace('@', '')}`} target="_blank" rel="noopener" className="hover:text-white transition-colors">
+                                Twitter
+                            </a>
+                        )}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {builder.skills.slice(0, expanded ? undefined : 5).map(skill => (
+                            <div key={skill.id} className="flex items-center gap-2">
+                                <span className="skill-badge px-3 py-1 rounded-lg text-sm">
+                                    {SKILLS[skill.id]}
+                                </span>
+                                <span className="text-xs text-gray-500">{skill.vouches}</span>
+                                {!isOwnProfile && currentAccount && (
+                                    <button
+                                        onClick={() => onVouch(builder.wallet, skill.id)}
+                                        className="vouch-btn px-2 py-0.5 bg-base-blue/20 hover:bg-base-blue/40 rounded text-xs transition-colors"
+                                    >
+                                        Vouch
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    
+                    {builder.skills.length > 5 && (
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className="text-sm text-base-blue hover:underline"
+                        >
+                            {expanded ? 'Show less' : `+${builder.skills.length - 5} more skills`}
+                        </button>
+                    )}
+                    
+                    <div className="flex gap-4 mt-4 pt-4 border-t border-white/5 text-sm text-gray-400">
+                        <span>{builder.vouchesReceived} vouches received</span>
+                        <span>{builder.vouchesGiven} vouches given</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function Leaderboard({ builders, onVouch, currentAccount }) {
+            return (
+                <div className="space-y-4">
+                    {builders.map((builder, index) => (
+                        <div key={builder.wallet} className="flex items-center gap-4">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                                index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'bg-white/10'
+                            }`}>
+                                {index + 1}
+                            </div>
+                            <div className="flex-1">
+                                <BuilderCard 
+                                    builder={builder} 
+                                    onVouch={onVouch}
+                                    currentAccount={currentAccount}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // ============ MAIN APP ============
+
+        function App() {
+            const [account, setAccount] = useState(null);
+            const [provider, setProvider] = useState(null);
+            const [contract, setContract] = useState(null);
+            const [isRegistered, setIsRegistered] = useState(false);
+            const [myProfile, setMyProfile] = useState(null);
+            const [builders, setBuilders] = useState([]);
+            const [stats, setStats] = useState({ builders: 0, vouches: 0, skills: 0 });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [view, setView] = useState('home'); // home, register, leaderboard, profile
+            
+            // Connect wallet
+            const connectWallet = async () => {
+                if (!window.ethereum) {
+                    setError('Please install MetaMask');
+                    return;
+                }
+                
+                try {
+                    setLoading(true);
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send('eth_requestAccounts', []);
+                    
+                    const network = await provider.getNetwork();
+                    if (network.chainId !== CHAIN_ID) {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x2105' }]
+                        });
+                    }
+                    
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    
+                    setProvider(provider);
+                    setContract(contract);
+                    setAccount(address);
+                    
+                    // Check if registered
+                    await checkRegistration(contract, address);
+                    
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const disconnectWallet = () => {
+                setAccount(null);
+                setProvider(null);
+                setContract(null);
+                setIsRegistered(false);
+                setMyProfile(null);
+            };
+            
+            const checkRegistration = async (contract, address) => {
+                try {
+                    const builder = await contract.builders(address);
+                    if (builder[8]) { // exists field
+                        setIsRegistered(true);
+                        await loadMyProfile(contract, address);
+                    }
+                } catch (err) {
+                    console.error('Error checking registration:', err);
+                }
+            };
+            
+            const loadMyProfile = async (contract, address) => {
+                try {
+                    const [username, github, twitter, registeredAt, credibilityScore, vouchesReceived, vouchesGiven, skills] = 
+                        await contract.getBuilder(address);
+                    
+                    const [skillIds, vouchCounts] = await contract.getSkillsWithVouches(address);
+                    
+                    setMyProfile({
+                        wallet: address,
+                        username,
+                        github,
+                        twitter,
+                        registeredAt: registeredAt.toNumber(),
+                        credibilityScore: credibilityScore.toNumber(),
+                        vouchesReceived: vouchesReceived.toNumber(),
+                        vouchesGiven: vouchesGiven.toNumber(),
+                        skills: skillIds.map((id, i) => ({
+                            id: id,
+                            vouches: vouchCounts[i].toNumber()
+                        }))
+                    });
+                } catch (err) {
+                    console.error('Error loading profile:', err);
+                }
+            };
+            
+            const loadStats = async () => {
+                if (!contract) return;
+                try {
+                    const [builderCount, vouchCount, skillCount] = await Promise.all([
+                        contract.getBuilderCount(),
+                        contract.totalVouches(),
+                        contract.totalSkillsClaimed()
+                    ]);
+                    setStats({
+                        builders: builderCount.toNumber(),
+                        vouches: vouchCount.toNumber(),
+                        skills: skillCount.toNumber()
+                    });
+                } catch (err) {
+                    console.error('Error loading stats:', err);
+                }
+            };
+            
+            const loadBuilders = async () => {
+                if (!contract) return;
+                try {
+                    const addresses = await contract.getBuilders(0, 50);
+                    const builderData = await Promise.all(
+                        addresses.map(async (addr) => {
+                            const [username, github, twitter, registeredAt, credibilityScore, vouchesReceived, vouchesGiven, skills] = 
+                                await contract.getBuilder(addr);
+                            const [skillIds, vouchCounts] = await contract.getSkillsWithVouches(addr);
+                            
+                            return {
+                                wallet: addr,
+                                username,
+                                github,
+                                twitter,
+                                registeredAt: registeredAt.toNumber(),
+                                credibilityScore: credibilityScore.toNumber(),
+                                vouchesReceived: vouchesReceived.toNumber(),
+                                vouchesGiven: vouchesGiven.toNumber(),
+                                skills: skillIds.map((id, i) => ({
+                                    id: id,
+                                    vouches: vouchCounts[i].toNumber()
+                                }))
+                            };
+                        })
+                    );
+                    
+                    // Sort by credibility score
+                    builderData.sort((a, b) => b.credibilityScore - a.credibilityScore);
+                    setBuilders(builderData);
+                } catch (err) {
+                    console.error('Error loading builders:', err);
+                }
+            };
+            
+            const handleRegister = async ({ username, github, twitter, skills }) => {
+                if (!contract) return;
+                
+                try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    const registerFee = await contract.registerFee();
+                    const skillFee = await contract.addSkillFee();
+                    const totalFee = registerFee.add(skillFee.mul(skills.length));
+                    
+                    const tx = await contract.register(username, github, twitter, skills, {
+                        value: totalFee
+                    });
+                    
+                    await tx.wait();
+                    setIsRegistered(true);
+                    await loadMyProfile(contract, account);
+                    await loadStats();
+                    setView('profile');
+                    
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const handleVouch = async (builderAddress, skillId) => {
+                if (!contract) return;
+                
+                try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    const vouchFee = await contract.vouchFee();
+                    const tx = await contract.vouch(builderAddress, skillId, {
+                        value: vouchFee
+                    });
+                    
+                    await tx.wait();
+                    await loadBuilders();
+                    await loadStats();
+                    if (account) await loadMyProfile(contract, account);
+                    
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            useEffect(() => {
+                if (contract) {
+                    loadStats();
+                    loadBuilders();
+                }
+            }, [contract]);
+            
+            return (
+                <div className="min-h-screen">
+                    <Header 
+                        account={account}
+                        onConnect={connectWallet}
+                        onDisconnect={disconnectWallet}
+                    />
+                    
+                    <main className="pt-24 px-6 pb-12">
+                        <div className="max-w-6xl mx-auto">
+                            {/* Hero Section */}
+                            {view === 'home' && (
+                                <div className="text-center mb-16">
+                                    <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                                        Prove Your Skills<br />
+                                        <span className="text-base-blue glow-text">On-Chain</span>
+                                    </h1>
+                                    <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+                                        The decentralized credential system for Base builders. 
+                                        Register your skills, get vouched by peers, build your reputation.
+                                    </p>
+                                    
+                                    <Stats stats={stats} />
+                                    
+                                    {!account ? (
+                                        <button 
+                                            onClick={connectWallet}
+                                            className="btn-primary px-8 py-4 rounded-xl font-semibold text-lg"
+                                        >
+                                            Connect Wallet to Get Started
+                                        </button>
+                                    ) : isRegistered ? (
+                                        <div className="flex justify-center gap-4">
+                                            <button 
+                                                onClick={() => setView('profile')}
+                                                className="btn-primary px-8 py-4 rounded-xl font-semibold"
+                                            >
+                                                View My Profile
+                                            </button>
+                                            <button 
+                                                onClick={() => setView('leaderboard')}
+                                                className="px-8 py-4 rounded-xl font-semibold border border-white/20 hover:border-white/40 transition-colors"
+                                            >
+                                                Explore Builders
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setView('register')}
+                                            className="btn-primary px-8 py-4 rounded-xl font-semibold text-lg"
+                                        >
+                                            Register as Builder
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Register View */}
+                            {view === 'register' && (
+                                <div className="max-w-2xl mx-auto">
+                                    <button 
+                                        onClick={() => setView('home')}
+                                        className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+                                    >
+                                        ← Back
+                                    </button>
+                                    <h2 className="text-3xl font-bold mb-8">Register as Builder</h2>
+                                    <div className="card rounded-2xl p-8">
+                                        <RegisterForm onRegister={handleRegister} loading={loading} />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Profile View */}
+                            {view === 'profile' && myProfile && (
+                                <div className="max-w-2xl mx-auto">
+                                    <button 
+                                        onClick={() => setView('home')}
+                                        className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+                                    >
+                                        ← Back
+                                    </button>
+                                    <h2 className="text-3xl font-bold mb-8">My Profile</h2>
+                                    <BuilderCard 
+                                        builder={myProfile}
+                                        onVouch={handleVouch}
+                                        currentAccount={account}
+                                    />
+                                </div>
+                            )}
+                            
+                            {/* Leaderboard View */}
+                            {view === 'leaderboard' && (
+                                <div>
+                                    <button 
+                                        onClick={() => setView('home')}
+                                        className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+                                    >
+                                        ← Back
+                                    </button>
+                                    <h2 className="text-3xl font-bold mb-8">Top Builders</h2>
+                                    <Leaderboard 
+                                        builders={builders}
+                                        onVouch={handleVouch}
+                                        currentAccount={account}
+                                    />
+                                </div>
+                            )}
+                            
+                            {/* Error Display */}
+                            {error && (
+                                <div className="fixed bottom-6 right-6 bg-red-500/20 border border-red-500 text-red-200 px-6 py-4 rounded-xl max-w-md">
+                                    <div className="flex justify-between items-start">
+                                        <p>{error}</p>
+                                        <button onClick={() => setError(null)} className="ml-4">×</button>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Loading Overlay */}
+                            {loading && (
+                                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                                    <div className="card p-8 rounded-2xl text-center">
+                                        <div className="w-12 h-12 border-4 border-base-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                        <p>Processing transaction...</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                    
+                    {/* Footer */}
+                    <footer className="border-t border-white/5 py-8 text-center text-gray-500 text-sm">
+                        <p>Built on Base 🔵</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
