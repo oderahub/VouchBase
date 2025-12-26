@@ -4,6 +4,8 @@
 
 VouchBase is a decentralized reputation system where builders register their skills and get vouched for by peers. Build your on-chain credibility score and prove your expertise.
 
+**Built with [Reown AppKit](https://reown.com/appkit)** (formerly WalletConnect) - Supporting 600+ wallets including MetaMask, Coinbase Wallet, Rainbow, Trust Wallet, and more.
+
 ---
 
 ## 🎯 Features
@@ -57,6 +59,25 @@ Score = (Vouches Received × 10) + (Skills Claimed × 5) + (Vouches Given × 2)
 
 ---
 
+## 🌐 Live Deployment
+
+### Contract Address
+**`0xAE5d214ecE811D3B65E42f7018e8fD77f16ebb78`**
+
+### Network
+Base Mainnet (Chain ID: 8453)
+
+### Verification
+- [View on BaseScan](https://basescan.org/address/0xAE5d214ecE811D3B65E42f7018e8fD77f16ebb78)
+- [Sourcify Verification](https://repo.sourcify.dev/contracts/full_match/8453/0xAE5d214ecE811D3B65E42f7018e8fD77f16ebb78/)
+
+### Stats
+- Gas Used: 4,352,059
+- Deployment Cost: ~0.0000047 ETH
+- Verified: ✅ Sourcify
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -88,28 +109,46 @@ cd ..
 ### 3. Deploy Contract
 
 ```bash
+# Compile the contract
+forge build
+
 # Deploy to Base mainnet
-forge script script/Deploy.s.sol \
+forge script script/Deploy.s.sol:DeployVouchBase \
     --rpc-url https://mainnet.base.org \
     --broadcast \
-    --verify \
-    -vvvv
+    -vvv
+
+# Verify on Sourcify (no API key needed)
+forge verify-contract <YOUR_CONTRACT_ADDRESS> \
+    contracts/VouchBase.sol:VouchBase \
+    --chain-id 8453 \
+    --verifier sourcify
 
 # Note the deployed address and update:
 # 1. .env file: VOUCHBASE_ADDRESS=0x...
-# 2. frontend/index.html: CONTRACT_ADDRESS = '0x...'
+# 2. frontend/.env: VITE_CONTRACT_ADDRESS=0x...
 ```
 
 ### 4. Run Frontend
 
 ```bash
-# Simple local server
 cd frontend
-python -m http.server 8000
-# or
-npx serve .
 
-# Open http://localhost:8000
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+# Update .env with:
+# - VITE_REOWN_PROJECT_ID (get from https://cloud.reown.com/)
+# - VITE_CONTRACT_ADDRESS (your deployed contract)
+
+# Run development server
+npm run dev
+# Open http://localhost:3000
+
+# Build for production
+npm run build
 ```
 
 ### 5. Run Interaction Scripts
@@ -143,12 +182,17 @@ vouchbase/
 │   └── VouchBase.sol          # Main smart contract
 ├── script/
 │   └── Deploy.s.sol           # Foundry deployment script
-├── scripts/
-│   ├── interact.js            # Node.js interaction scripts
-│   └── package.json
 ├── frontend/
-│   └── index.html             # React frontend (single file)
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── config/            # Contract ABI & config
+│   │   ├── hooks/             # Custom React hooks
+│   │   └── styles/            # Tailwind CSS
+│   ├── package.json           # Frontend dependencies
+│   └── vite.config.js         # Vite configuration
 ├── foundry.toml               # Foundry configuration
+├── foundry.lock               # Foundry dependencies lock
+├── deploy.sh                  # Deployment helper script
 ├── .env.example               # Environment template
 └── README.md
 ```
@@ -249,7 +293,9 @@ MIT
 
 - **Base Mainnet**: https://base.org
 - **BaseScan**: https://basescan.org
-- **Contract**: `YOUR_DEPLOYED_ADDRESS`
+- **Contract**: `0xAE5d214ecE811D3B65E42f7018e8fD77f16ebb78`
+- **Reown AppKit**: https://reown.com/appkit
+- **WalletConnect**: https://walletconnect.com
 
 ---
 
